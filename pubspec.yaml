@@ -1,0 +1,23 @@
+name: ht_auth_api
+description: ...
+repository: https://github.com/headlines-toolkit/ht-auth-api
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  ht_auth_client:
+    git:
+      url: https://github.com/headlines-toolkit/ht-auth-client.git
+  ht_http_client:
+    git:
+      url: https://github.com/headlines-toolkit/ht-http-client.git
+  ht_shared:
+    git:
+      url: https://github.com/headlines-toolkit/ht-shared.git
+
+dev_dependencies:
+  mocktail: ^1.0.4
+  test: ^1.25.8
+  very_good_analysis: ^7.0.0
