@@ -67,7 +67,6 @@ class HtAuthApi implements HtAuthClient {
   @override
   Future<User?> getCurrentUser() async {
     try {
-      // Use the proposed GET /me endpoint
       final response = await _httpClient.get<Map<String, dynamic>>(
         '$_authBasePath/me',
       );
@@ -96,7 +95,6 @@ class HtAuthApi implements HtAuthClient {
   @override
   Future<void> requestSignInCode(String email) async {
     try {
-      // Use the proposed POST /request-code endpoint
       await _httpClient.post<void>(
         '$_authBasePath/request-code',
         data: {'email': email},
@@ -112,7 +110,6 @@ class HtAuthApi implements HtAuthClient {
   @override
   Future<User> verifySignInCode(String email, String code) async {
     try {
-      // Use the proposed POST /verify-code endpoint
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/verify-code',
         data: {'email': email, 'code': code},
@@ -134,7 +131,6 @@ class HtAuthApi implements HtAuthClient {
   @override
   Future<User> signInAnonymously() async {
     try {
-      // Use the proposed POST /anonymous endpoint
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/anonymous',
       );
@@ -155,9 +151,6 @@ class HtAuthApi implements HtAuthClient {
   @override
   Future<void> signOut() async {
     try {
-      // Use the proposed POST /sign-out endpoint (optional but recommended)
-      // This call might not be strictly necessary if the backend doesn't
-      // require explicit invalidation, but it's good practice.
       await _httpClient.post<void>('$_authBasePath/sign-out');
     } on HtHttpException catch (e) {
       // Log or handle sign-out specific errors if necessary,
