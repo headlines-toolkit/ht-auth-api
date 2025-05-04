@@ -1,5 +1,5 @@
 name: ht_auth_api
-description: ...
+description: Concrete API implementation of the HtAuthClient interface.
 repository: https://github.com/headlines-toolkit/ht-auth-api
 publish_to: none
 
