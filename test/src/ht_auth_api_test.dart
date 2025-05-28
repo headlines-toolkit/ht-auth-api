@@ -12,15 +12,35 @@ class MockHtHttpClient extends Mock implements HtHttpClient {}
 class MockUser extends Mock implements User {}
 
 // Fake User for testing
-final fakeUser =
-    User(id: 'user-123', isAnonymous: false, email: 'test@test.com');
-final fakeAnonymousUser = User(id: 'anon-456', isAnonymous: true);
-final fakeSuccessResponseUser = SuccessApiResponse<User>(data: fakeUser);
-final fakeSuccessResponseAnonUser =
-    SuccessApiResponse<User>(data: fakeAnonymousUser);
+final fakeUser = User(
+  id: 'user-123',
+  email: 'test@test.com',
+  role: UserRole.standardUser,
+);
+final fakeAnonymousUser = User(
+  id: 'anon-456',
+  role: UserRole.guestUser,
+);
+final fakeAuthSuccessResponse = AuthSuccessResponse(
+  user: fakeUser,
+  token: 'fake-token-123',
+);
+final fakeAnonymousAuthSuccessResponse = AuthSuccessResponse(
+  user: fakeAnonymousUser,
+  token: 'fake-anon-token-456',
+);
 
 // Helper to create Map<String, dynamic> from SuccessApiResponse<User>
 Map<String, dynamic> successUserResponseToJson(SuccessApiResponse<User> resp) {
+  return {
+    'data': resp.data.toJson(),
+  };
+}
+
+// Helper to create Map<String, dynamic> from SuccessApiResponse<AuthSuccessResponse>
+Map<String, dynamic> successAuthResponseToJson(
+  SuccessApiResponse<AuthSuccessResponse> resp,
+) {
   return {
     'data': resp.data.toJson(),
     if (resp.metadata != null) 'metadata': resp.metadata!.toJson(),
@@ -118,8 +138,9 @@ void main() {
             data: any(named: 'data'),
           ),
         ).thenAnswer(
-          (_) async =>
-              successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
+          (_) async => successAuthResponseToJson(
+            SuccessApiResponse(data: fakeAuthSuccessResponse),
+          ),
         );
       });
 
@@ -180,8 +201,9 @@ void main() {
             data: any(named: 'data'),
           ),
         ).thenAnswer(
-          (_) async =>
-              successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
+          (_) async => successAuthResponseToJson(
+            SuccessApiResponse(data: fakeAuthSuccessResponse),
+          ),
         );
         when(
           () => mockHttpClient.post<Map<String, dynamic>>(
@@ -189,8 +211,8 @@ void main() {
           ),
         ) // Removed data expectation
             .thenAnswer(
-          (_) async => successUserResponseToJson(
-            SuccessApiResponse(data: fakeAnonymousUser),
+          (_) async => successAuthResponseToJson(
+            SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
           ),
         );
       });
@@ -241,10 +263,13 @@ void main() {
         ).called(1);
       });
 
-      test('verifySignInCode returns user and emits state', () async {
+      test('verifySignInCode returns AuthSuccessResponse and emits user state',
+          () async {
         final expectation = expectLater(authStream, emits(fakeUser));
-        final user = await authApi.verifySignInCode('test@test.com', '123456');
-        expect(user, equals(fakeUser));
+        final result =
+            await authApi.verifySignInCode('test@test.com', '123456');
+        expect(result, equals(fakeAuthSuccessResponse));
+        expect(result.user, equals(fakeUser));
         await expectation;
         verify(
           () => mockHttpClient.post<Map<String, dynamic>>(
@@ -274,19 +299,21 @@ void main() {
         ).called(1);
       });
 
-      test('signInAnonymously returns user and emits state', () async {
+      test('signInAnonymously returns AuthSuccessResponse and emits user state',
+          () async {
         final expectation = expectLater(authStream, emits(fakeAnonymousUser));
         when(
           () => mockHttpClient.post<Map<String, dynamic>>(
             '/api/v1/auth/anonymous',
           ),
         ).thenAnswer(
-          (_) async => successUserResponseToJson(
-            SuccessApiResponse(data: fakeAnonymousUser),
+          (_) async => successAuthResponseToJson(
+            SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
           ),
         );
-        final user = await authApi.signInAnonymously();
-        expect(user, equals(fakeAnonymousUser));
+        final result = await authApi.signInAnonymously();
+        expect(result, equals(fakeAnonymousAuthSuccessResponse));
+        expect(result.user, equals(fakeAnonymousUser));
         await expectation;
         verify(
           () => mockHttpClient.post<Map<String, dynamic>>(
