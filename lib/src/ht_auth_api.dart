@@ -108,18 +108,21 @@ class HtAuthApi implements HtAuthClient {
   }
 
   @override
-  Future<User> verifySignInCode(String email, String code) async {
+  Future<AuthSuccessResponse> verifySignInCode(
+    String email,
+    String code,
+  ) async {
     try {
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/verify-code',
         data: {'email': email, 'code': code},
       );
-      final apiResponse = SuccessApiResponse<User>.fromJson(
+      final apiResponse = SuccessApiResponse<AuthSuccessResponse>.fromJson(
         response,
-        (json) => User.fromJson(json! as Map<String, dynamic>),
+        (json) => AuthSuccessResponse.fromJson(json! as Map<String, dynamic>),
       );
-      // Successful verification, update stream and return user.
-      _authStateController.add(apiResponse.data);
+      // Successful verification, update stream with the user from the response.
+      _authStateController.add(apiResponse.data.user);
       return apiResponse.data;
     } on HtHttpException {
       // Rethrow standardized exceptions (e.g., InvalidInputException,
@@ -129,17 +132,17 @@ class HtAuthApi implements HtAuthClient {
   }
 
   @override
-  Future<User> signInAnonymously() async {
+  Future<AuthSuccessResponse> signInAnonymously() async {
     try {
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/anonymous',
       );
-      final apiResponse = SuccessApiResponse<User>.fromJson(
+      final apiResponse = SuccessApiResponse<AuthSuccessResponse>.fromJson(
         response,
-        (json) => User.fromJson(json! as Map<String, dynamic>),
+        (json) => AuthSuccessResponse.fromJson(json! as Map<String, dynamic>),
       );
-      // Successful anonymous sign-in, update stream and return user.
-      _authStateController.add(apiResponse.data);
+      // Successful anonymous sign-in, update stream with the user.
+      _authStateController.add(apiResponse.data.user);
       return apiResponse.data;
     } on HtHttpException {
       // Rethrow standardized exceptions (e.g., ServerException,
