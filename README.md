@@ -1,6 +1,6 @@
 # ht_auth_api
 
-![coverage: 97%](https://img.shields.io/badge/coverage-97-green)
+![coverage: 98%](https://img.shields.io/badge/coverage-98-green)
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 [![License: PolyForm Free Trial](https://img.shields.io/badge/License-PolyForm%20Free%20Trial-blue)](https://polyformproject.org/licenses/free-trial/1.0.0)
 
@@ -59,7 +59,10 @@ void main() async {
   // Listen to authentication state changes
   authClient.authStateChanges.listen((user) {
     if (user != null) {
-      print('User signed in: ${user.id}, Anonymous: ${user.isAnonymous}');
+      // To check for an anonymous user, you would typically check their role,
+      // e.g., if (user.role == UserRole.guestUser) { ... }
+      // Assuming UserRole enum is accessible/imported.
+      print('User signed in: ${user.id}, Role: ${user.role}');
     } else {
       print('User signed out.');
     }
@@ -71,12 +74,12 @@ void main() async {
     print('Sign-in code requested.');
 
     // Example: Verify code (replace '123456' with actual code)
-    // final user = await authClient.verifySignInCode('user@example.com', '123456');
-    // print('User verified: ${user.id}');
+    // final authResponse = await authClient.verifySignInCode('user@example.com', '123456');
+    // print('User verified: ${authResponse.user.id}, Token: ${authResponse.token}');
 
     // Example: Sign in anonymously
-    // final anonUser = await authClient.signInAnonymously();
-    // print('Signed in anonymously: ${anonUser.id}');
+    // final anonAuthResponse = await authClient.signInAnonymously();
+    // print('Signed in anonymously: ${anonAuthResponse.user.id}, Token: ${anonAuthResponse.token}');
 
     // Example: Get current user
     // final currentUser = await authClient.getCurrentUser();
