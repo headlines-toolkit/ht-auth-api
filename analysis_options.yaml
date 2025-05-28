@@ -3,4 +3,5 @@ analyzer:
   errors:
     avoid_print: ignore
     inference_failure_on_function_invocation: ignore
+    lines_longer_than_80_chars: ignore
     prefer_const_constructors: ignore
