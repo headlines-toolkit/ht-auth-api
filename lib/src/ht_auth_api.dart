@@ -136,6 +136,8 @@ class HtAuthApi implements HtAuthClient {
     try {
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/anonymous',
+        // ignore: inference_failure_on_collection_literal
+        data: {},
       );
       final apiResponse = SuccessApiResponse<AuthSuccessResponse>.fromJson(
         response,
