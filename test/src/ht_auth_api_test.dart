@@ -17,10 +17,7 @@ final fakeUser = User(
   email: 'test@test.com',
   role: UserRole.standardUser,
 );
-final fakeAnonymousUser = User(
-  id: 'anon-456',
-  role: UserRole.guestUser,
-);
+final fakeAnonymousUser = User(id: 'anon-456', role: UserRole.guestUser);
 final fakeAuthSuccessResponse = AuthSuccessResponse(
   user: fakeUser,
   token: 'fake-token-123',
@@ -32,9 +29,7 @@ final fakeAnonymousAuthSuccessResponse = AuthSuccessResponse(
 
 // Helper to create Map<String, dynamic> from SuccessApiResponse<User>
 Map<String, dynamic> successUserResponseToJson(SuccessApiResponse<User> resp) {
-  return {
-    'data': resp.data.toJson(),
-  };
+  return {'data': resp.data.toJson()};
 }
 
 // Helper to create Map<String, dynamic> from SuccessApiResponse<AuthSuccessResponse>
@@ -68,37 +63,45 @@ void main() {
       });
 
       test(
-          'emits null initially if getCurrentUser throws UnauthorizedException',
-          () async {
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenThrow(UnauthorizedException('No session'));
-        authApi = HtAuthApi(httpClient: mockHttpClient);
-        authStream = authApi.authStateChanges;
-        await expectLater(authStream.first, completion(isNull));
-      });
+        'emits null initially if getCurrentUser throws UnauthorizedException',
+        () async {
+          when(
+            () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+          ).thenThrow(UnauthorizedException('No session'));
+          authApi = HtAuthApi(httpClient: mockHttpClient);
+          authStream = authApi.authStateChanges;
+          await expectLater(authStream.first, completion(isNull));
+        },
+      );
 
       test(
-          'emits null initially if getCurrentUser throws other HtHttpException',
-          () async {
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenThrow(ServerException('Server init error'));
-        authApi = HtAuthApi(httpClient: mockHttpClient);
-        authStream = authApi.authStateChanges;
-        await expectLater(authStream.first, completion(isNull));
-      });
+        'emits null initially if getCurrentUser throws other HtHttpException',
+        () async {
+          when(
+            () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+          ).thenThrow(ServerException('Server init error'));
+          authApi = HtAuthApi(httpClient: mockHttpClient);
+          authStream = authApi.authStateChanges;
+          await expectLater(authStream.first, completion(isNull));
+        },
+      );
 
-      test('emits null initially if getCurrentUser throws non-HtHttpException',
-          () async {
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenThrow(Exception('Unexpected init error'));
-        authApi = HtAuthApi(httpClient: mockHttpClient);
-        authStream = authApi.authStateChanges;
-        await expectLater(authStream.first, completion(isNull));
-      });
+      test(
+        'emits null initially if getCurrentUser throws non-HtHttpException',
+        () async {
+          when(
+            () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+          ).thenThrow(Exception('Unexpected init error'));
+          authApi = HtAuthApi(httpClient: mockHttpClient);
+          authStream = authApi.authStateChanges;
+          await expectLater(authStream.first, completion(isNull));
+        },
+      );
 
       test('emits user initially if getCurrentUser succeeds', () async {
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenAnswer(
+        when(
+          () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+        ).thenAnswer(
           (_) async =>
               successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
         );
@@ -113,8 +116,9 @@ void main() {
       setUp(() async {
         mockHttpClient = MockHtHttpClient();
         registerFallbackValue(Uri.parse('http://fallback.com'));
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenAnswer(
+        when(
+          () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+        ).thenAnswer(
           (_) async =>
               successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
         );
@@ -123,15 +127,18 @@ void main() {
         await authStream.first;
         await pumpEventQueue();
         clearInteractions(mockHttpClient);
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenAnswer(
+        when(
+          () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+        ).thenAnswer(
           (_) async =>
               successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
         );
-        when(() => mockHttpClient.post<void>(any(), data: any(named: 'data')))
-            .thenAnswer((_) async {});
-        when(() => mockHttpClient.post<void>('/api/v1/auth/sign-out'))
-            .thenAnswer((_) async {});
+        when(
+          () => mockHttpClient.post<void>(any(), data: any(named: 'data')),
+        ).thenAnswer((_) async {});
+        when(
+          () => mockHttpClient.post<void>('/api/v1/auth/sign-out'),
+        ).thenAnswer((_) async {});
         when(
           () => mockHttpClient.post<Map<String, dynamic>>(
             any(),
@@ -148,33 +155,40 @@ void main() {
         authApi.dispose();
       });
 
-      test('getCurrentUser returns user without extra stream emission',
-          () async {
-        final user = await authApi.getCurrentUser();
-        expect(user, fakeUser);
-        verify(
-          () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
-        ).called(1);
-      });
+      test(
+        'getCurrentUser returns user without extra stream emission',
+        () async {
+          final user = await authApi.getCurrentUser();
+          expect(user, fakeUser);
+          verify(
+            () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+          ).called(1);
+        },
+      );
 
       test('signOut emits null', () async {
         final expectation = expectLater(authStream, emits(isNull));
         await authApi.signOut();
         await expectation;
-        verify(() => mockHttpClient.post<void>('/api/v1/auth/sign-out'))
-            .called(1);
+        verify(
+          () => mockHttpClient.post<void>('/api/v1/auth/sign-out'),
+        ).called(1);
       });
 
-      test('signOut completes and emits null even if HTTP call fails',
-          () async {
-        when(() => mockHttpClient.post<void>('/api/v1/auth/sign-out'))
-            .thenThrow(NetworkException());
-        final expectation = expectLater(authStream, emits(isNull));
-        await expectLater(authApi.signOut(), completes);
-        await expectation;
-        verify(() => mockHttpClient.post<void>('/api/v1/auth/sign-out'))
-            .called(1);
-      });
+      test(
+        'signOut completes and emits null even if HTTP call fails',
+        () async {
+          when(
+            () => mockHttpClient.post<void>('/api/v1/auth/sign-out'),
+          ).thenThrow(NetworkException());
+          final expectation = expectLater(authStream, emits(isNull));
+          await expectLater(authApi.signOut(), completes);
+          await expectation;
+          verify(
+            () => mockHttpClient.post<void>('/api/v1/auth/sign-out'),
+          ).called(1);
+        },
+      );
     });
 
     // --- Test Group: Operations after Failed Initialization (Unauthorized) ---
@@ -182,19 +196,23 @@ void main() {
       setUp(() async {
         mockHttpClient = MockHtHttpClient();
         registerFallbackValue(Uri.parse('http://fallback.com'));
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenThrow(UnauthorizedException('No session'));
+        when(
+          () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+        ).thenThrow(UnauthorizedException('No session'));
         authApi = HtAuthApi(httpClient: mockHttpClient);
         authStream = authApi.authStateChanges;
         await authStream.first;
         await pumpEventQueue();
         clearInteractions(mockHttpClient);
-        when(() => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'))
-            .thenThrow(UnauthorizedException('No session'));
-        when(() => mockHttpClient.post<void>(any(), data: any(named: 'data')))
-            .thenAnswer((_) async {});
-        when(() => mockHttpClient.post<void>('/api/v1/auth/sign-out'))
-            .thenAnswer((_) async {});
+        when(
+          () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+        ).thenThrow(UnauthorizedException('No session'));
+        when(
+          () => mockHttpClient.post<void>(any(), data: any(named: 'data')),
+        ).thenAnswer((_) async {});
+        when(
+          () => mockHttpClient.post<void>('/api/v1/auth/sign-out'),
+        ).thenAnswer((_) async {});
         when(
           () => mockHttpClient.post<Map<String, dynamic>>(
             '/api/v1/auth/verify-code',
@@ -206,29 +224,31 @@ void main() {
           ),
         );
         when(
-          () => mockHttpClient.post<Map<String, dynamic>>(
-            '/api/v1/auth/anonymous',
-          ),
-        ) // Removed data expectation
+              () => mockHttpClient.post<Map<String, dynamic>>(
+                '/api/v1/auth/anonymous',
+              ),
+            ) // Removed data expectation
             .thenAnswer(
-          (_) async => successAuthResponseToJson(
-            SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
-          ),
-        );
+              (_) async => successAuthResponseToJson(
+                SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
+              ),
+            );
       });
 
       tearDown(() {
         authApi.dispose();
       });
 
-      test('getCurrentUser returns null without extra stream emission',
-          () async {
-        final user = await authApi.getCurrentUser();
-        expect(user, isNull);
-        verify(
-          () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
-        ).called(1);
-      });
+      test(
+        'getCurrentUser returns null without extra stream emission',
+        () async {
+          final user = await authApi.getCurrentUser();
+          expect(user, isNull);
+          verify(
+            () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
+          ).called(1);
+        },
+      );
 
       test('requestSignInCode completes normally', () async {
         await expectLater(
@@ -263,21 +283,25 @@ void main() {
         ).called(1);
       });
 
-      test('verifySignInCode returns AuthSuccessResponse and emits user state',
-          () async {
-        final expectation = expectLater(authStream, emits(fakeUser));
-        final result =
-            await authApi.verifySignInCode('test@test.com', '123456');
-        expect(result, equals(fakeAuthSuccessResponse));
-        expect(result.user, equals(fakeUser));
-        await expectation;
-        verify(
-          () => mockHttpClient.post<Map<String, dynamic>>(
-            '/api/v1/auth/verify-code',
-            data: {'email': 'test@test.com', 'code': '123456'},
-          ),
-        ).called(1);
-      });
+      test(
+        'verifySignInCode returns AuthSuccessResponse and emits user state',
+        () async {
+          final expectation = expectLater(authStream, emits(fakeUser));
+          final result = await authApi.verifySignInCode(
+            'test@test.com',
+            '123456',
+          );
+          expect(result, equals(fakeAuthSuccessResponse));
+          expect(result.user, equals(fakeUser));
+          await expectation;
+          verify(
+            () => mockHttpClient.post<Map<String, dynamic>>(
+              '/api/v1/auth/verify-code',
+              data: {'email': 'test@test.com', 'code': '123456'},
+            ),
+          ).called(1);
+        },
+      );
 
       test('verifySignInCode rethrows HtHttpExceptions', () async {
         final exception = AuthenticationException('Invalid code');
@@ -299,28 +323,30 @@ void main() {
         ).called(1);
       });
 
-      test('signInAnonymously returns AuthSuccessResponse and emits user state',
-          () async {
-        final expectation = expectLater(authStream, emits(fakeAnonymousUser));
-        when(
-          () => mockHttpClient.post<Map<String, dynamic>>(
-            '/api/v1/auth/anonymous',
-          ),
-        ).thenAnswer(
-          (_) async => successAuthResponseToJson(
-            SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
-          ),
-        );
-        final result = await authApi.signInAnonymously();
-        expect(result, equals(fakeAnonymousAuthSuccessResponse));
-        expect(result.user, equals(fakeAnonymousUser));
-        await expectation;
-        verify(
-          () => mockHttpClient.post<Map<String, dynamic>>(
-            '/api/v1/auth/anonymous',
-          ),
-        ).called(1);
-      });
+      test(
+        'signInAnonymously returns AuthSuccessResponse and emits user state',
+        () async {
+          final expectation = expectLater(authStream, emits(fakeAnonymousUser));
+          when(
+            () => mockHttpClient.post<Map<String, dynamic>>(
+              '/api/v1/auth/anonymous',
+            ),
+          ).thenAnswer(
+            (_) async => successAuthResponseToJson(
+              SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
+            ),
+          );
+          final result = await authApi.signInAnonymously();
+          expect(result, equals(fakeAnonymousAuthSuccessResponse));
+          expect(result.user, equals(fakeAnonymousUser));
+          await expectation;
+          verify(
+            () => mockHttpClient.post<Map<String, dynamic>>(
+              '/api/v1/auth/anonymous',
+            ),
+          ).called(1);
+        },
+      );
 
       test('signInAnonymously rethrows HtHttpExceptions', () async {
         final exception = ServerException('Failed to create anon user');
@@ -344,8 +370,9 @@ void main() {
         final expectation = expectLater(authStream, emits(isNull));
         await authApi.signOut();
         await expectation;
-        verify(() => mockHttpClient.post<void>('/api/v1/auth/sign-out'))
-            .called(1);
+        verify(
+          () => mockHttpClient.post<void>('/api/v1/auth/sign-out'),
+        ).called(1);
       });
     });
 
@@ -355,8 +382,9 @@ void main() {
         // Arrange
         mockHttpClient = MockHtHttpClient();
         registerFallbackValue(Uri.parse('http://fallback.com'));
-        when(() => mockHttpClient.get<Map<String, dynamic>>(any()))
-            .thenThrow(UnauthorizedException('No session'));
+        when(
+          () => mockHttpClient.get<Map<String, dynamic>>(any()),
+        ).thenThrow(UnauthorizedException('No session'));
         authApi = HtAuthApi(httpClient: mockHttpClient);
         // *** ADDED pumpEventQueue here ***
         await pumpEventQueue(); // Allow _initializeAuthStatus to complete
