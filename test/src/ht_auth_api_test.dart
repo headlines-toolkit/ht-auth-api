@@ -15,9 +15,16 @@ class MockUser extends Mock implements User {}
 final fakeUser = User(
   id: 'user-123',
   email: 'test@test.com',
-  role: UserRole.standardUser,
+  roles: ['standard_user'], // Updated to list of strings
+  createdAt: null, // Added new field
+  lastAccountActionShownAt: null, // Added new field
 );
-final fakeAnonymousUser = User(id: 'anon-456', role: UserRole.guestUser);
+final fakeAnonymousUser = User(
+  id: 'anon-456',
+  roles: ['guest_user'], // Updated to list of strings
+  createdAt: null, // Added new field
+  lastAccountActionShownAt: null, // Added new field
+);
 final fakeAuthSuccessResponse = AuthSuccessResponse(
   user: fakeUser,
   token: 'fake-token-123',
