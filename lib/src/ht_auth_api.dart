@@ -93,11 +93,14 @@ class HtAuthApi implements HtAuthClient {
   }
 
   @override
-  Future<void> requestSignInCode(String email) async {
+  Future<void> requestSignInCode(
+    String email, {
+    bool isDashboardLogin = false,
+  }) async {
     try {
       await _httpClient.post<void>(
         '$_authBasePath/request-code',
-        data: {'email': email},
+        data: {'email': email, 'isDashboardLogin': isDashboardLogin},
       );
       // No user state change here, just request sent.
     } on HtHttpException {
@@ -110,12 +113,17 @@ class HtAuthApi implements HtAuthClient {
   @override
   Future<AuthSuccessResponse> verifySignInCode(
     String email,
-    String code,
-  ) async {
+    String code, {
+    bool isDashboardLogin = false,
+  }) async {
     try {
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/verify-code',
-        data: {'email': email, 'code': code},
+        data: {
+          'email': email,
+          'code': code,
+          'isDashboardLogin': isDashboardLogin,
+        },
       );
       final apiResponse = SuccessApiResponse<AuthSuccessResponse>.fromJson(
         response,
@@ -136,8 +144,7 @@ class HtAuthApi implements HtAuthClient {
     try {
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/anonymous',
-        // ignore: inference_failure_on_collection_literal
-        data: {},
+        data: <String, dynamic>{},
       );
       final apiResponse = SuccessApiResponse<AuthSuccessResponse>.fromJson(
         response,
