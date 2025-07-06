@@ -100,7 +100,7 @@ class HtAuthApi implements HtAuthClient {
     try {
       await _httpClient.post<void>(
         '$_authBasePath/request-code',
-        data: {'email': email, 'isDashboardLogin': isDashboardLogin},
+        data: {'email': email, 'is_dashboard_login': isDashboardLogin},
       );
       // No user state change here, just request sent.
     } on HtHttpException {
@@ -122,7 +122,7 @@ class HtAuthApi implements HtAuthClient {
         data: {
           'email': email,
           'code': code,
-          'isDashboardLogin': isDashboardLogin,
+          'is_dashboard_login': isDashboardLogin,
         },
       );
       final apiResponse = SuccessApiResponse<AuthSuccessResponse>.fromJson(
