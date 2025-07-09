@@ -17,7 +17,8 @@ class MockUser extends Mock implements User {
   Map<FeedActionType, UserFeedActionStatus> get feedActionStatus =>
       Map.fromEntries(
         FeedActionType.values.map(
-          (type) => MapEntry(type, const UserFeedActionStatus(isCompleted: false)),
+          (type) =>
+              MapEntry(type, const UserFeedActionStatus(isCompleted: false)),
         ),
       );
 }
@@ -65,20 +66,14 @@ final fakeResponseMetadata = ResponseMetadata(
 
 // Helper to create Map<String, dynamic> from SuccessApiResponse<User>
 Map<String, dynamic> successUserResponseToJson(SuccessApiResponse<User> resp) {
-  return {
-    'data': resp.data.toJson(),
-    'metadata': resp.metadata.toJson(),
-  };
+  return {'data': resp.data.toJson(), 'metadata': resp.metadata.toJson()};
 }
 
 // Helper to create Map<String, dynamic> from SuccessApiResponse<AuthSuccessResponse>
 Map<String, dynamic> successAuthResponseToJson(
   SuccessApiResponse<AuthSuccessResponse> resp,
 ) {
-  return {
-    'data': resp.data.toJson(),
-    'metadata': resp.metadata.toJson(),
-  };
+  return {'data': resp.data.toJson(), 'metadata': resp.metadata.toJson()};
 }
 
 // Helper to wait for microtasks to complete
@@ -223,7 +218,11 @@ void main() {
           () => mockHttpClient.post<void>('/api/v1/auth/sign-out'),
         ).called(1);
         verify(() => mockLogger.info('Attempting to sign out...')).called(1);
-        verify(() => mockLogger.info('Sign-out process complete. Local state cleared.')).called(1);
+        verify(
+          () => mockLogger.info(
+            'Sign-out process complete. Local state cleared.',
+          ),
+        ).called(1);
       });
 
       test(
@@ -305,7 +304,9 @@ void main() {
           verify(
             () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
           ).called(1);
-          verify(() => mockLogger.fine('No authenticated user found (401).')).called(1);
+          verify(
+            () => mockLogger.fine('No authenticated user found (401).'),
+          ).called(1);
         },
       );
 
@@ -344,7 +345,9 @@ void main() {
           ),
         ).called(1);
         verify(
-          () => mockLogger.warning(any(that: contains('Failed to request sign-in code'))),
+          () => mockLogger.warning(
+            any(that: contains('Failed to request sign-in code')),
+          ),
         ).called(1);
       });
 
@@ -365,12 +368,19 @@ void main() {
               data: {
                 'email': 'test@test.com',
                 'code': '123456',
-                'isDashboardLogin': false
+                'isDashboardLogin': false,
               },
             ),
           ).called(1);
-          verify(() => mockLogger.info(any(that: contains('Verifying sign-in code')))).called(1);
-          verify(() => mockLogger.fine(any(that: contains('Successfully verified code')))).called(1);
+          verify(
+            () =>
+                mockLogger.info(any(that: contains('Verifying sign-in code'))),
+          ).called(1);
+          verify(
+            () => mockLogger.fine(
+              any(that: contains('Successfully verified code')),
+            ),
+          ).called(1);
         },
       );
 
@@ -392,12 +402,15 @@ void main() {
             data: {
               'email': 'test@test.com',
               'code': 'wrong-code',
-              'isDashboardLogin': false
+              'isDashboardLogin': false,
             },
           ),
         ).called(1);
-        verify(() => mockLogger.warning(any(that: contains('Failed to verify sign-in code'))))
-            .called(1);
+        verify(
+          () => mockLogger.warning(
+            any(that: contains('Failed to verify sign-in code')),
+          ),
+        ).called(1);
       });
 
       test(
@@ -426,8 +439,14 @@ void main() {
               data: <String, dynamic>{},
             ),
           ).called(1);
-          verify(() => mockLogger.info('Attempting to sign in anonymously...')).called(1);
-          verify(() => mockLogger.fine(any(that: contains('Successfully signed in anonymously')))).called(1);
+          verify(
+            () => mockLogger.info('Attempting to sign in anonymously...'),
+          ).called(1);
+          verify(
+            () => mockLogger.fine(
+              any(that: contains('Successfully signed in anonymously')),
+            ),
+          ).called(1);
         },
       );
 
@@ -449,7 +468,13 @@ void main() {
             data: <String, dynamic>{},
           ),
         ).called(1);
-        verify(() => mockLogger.warning('Failed to sign in anonymously.', any(), any())).called(1);
+        verify(
+          () => mockLogger.warning(
+            'Failed to sign in anonymously.',
+            any(),
+            any(),
+          ),
+        ).called(1);
       });
 
       test('signOut completes and emits null', () async {
@@ -478,7 +503,9 @@ void main() {
 
         // Act: Dispose the API instance
         authApi.dispose();
-        verify(() => mockLogger.fine('Disposing HtAuthApi and closing auth stream.')).called(1);
+        verify(
+          () => mockLogger.fine('Disposing HtAuthApi and closing auth stream.'),
+        ).called(1);
 
         // Assert: Expect the stream to be closed
         await expectLater(stream, emitsDone);

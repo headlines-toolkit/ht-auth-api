@@ -23,11 +23,9 @@ class HtAuthApi implements HtAuthClient {
   ///
   /// Requires an instance of [HtHttpClient] configured with the base URL
   /// of the API and a token provider.
-  HtAuthApi({
-    required HtHttpClient httpClient,
-    Logger? logger,
-  })  : _httpClient = httpClient,
-        _logger = logger ?? Logger('HtAuthApi') {
+  HtAuthApi({required HtHttpClient httpClient, Logger? logger})
+    : _httpClient = httpClient,
+      _logger = logger ?? Logger('HtAuthApi') {
     // Initialize with current user status check
     _initializeAuthStatus();
   }
@@ -59,7 +57,11 @@ class HtAuthApi implements HtAuthClient {
     } on HtHttpException catch (e, s) {
       // If fetching the current user fails (e.g., 401 Unauthorized),
       // it means no user is currently logged in. Emit null.
-      _logger.warning('Failed to get current user during initialization.', e, s);
+      _logger.warning(
+        'Failed to get current user during initialization.',
+        e,
+        s,
+      );
       _authStateController.add(null);
     } on Object catch (e, s) {
       // Catch any other unexpected error during initialization
@@ -201,7 +203,11 @@ class HtAuthApi implements HtAuthClient {
       _logger.warning('Error during backend sign-out notification.', e, s);
     } on Object catch (e, s) {
       // Catch potential non-HTTP errors during sign-out call
-      _logger.severe('Unexpected error during backend sign-out notification.', e, s);
+      _logger.severe(
+        'Unexpected error during backend sign-out notification.',
+        e,
+        s,
+      );
     } finally {
       // Always clear the local authentication state by emitting null.
       _authStateController.add(null);
