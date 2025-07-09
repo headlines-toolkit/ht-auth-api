@@ -9,22 +9,42 @@ import 'package:test/test.dart';
 // Mocks
 class MockHtHttpClient extends Mock implements HtHttpClient {}
 
-class MockUser extends Mock implements User {}
+class MockUser extends Mock implements User {
+  @override
+  Map<FeedActionType, UserFeedActionStatus> get feedActionStatus =>
+      Map.fromEntries(
+        FeedActionType.values.map(
+          (type) => MapEntry(type, const UserFeedActionStatus(isCompleted: false)),
+        ),
+      );
+}
 
 // Fake User for testing
 final fakeUser = User(
   id: 'user-123',
   email: 'test@test.com',
-  roles: ['standard_user'], // Updated to list of strings
-  createdAt: null, // Added new field
-  lastAccountActionShownAt: null, // Added new field
+  appRole: AppUserRole.standardUser,
+  dashboardRole: DashboardUserRole.none,
+  createdAt: DateTime.now(),
+  feedActionStatus: Map.fromEntries(
+    FeedActionType.values.map(
+      (type) => MapEntry(type, const UserFeedActionStatus(isCompleted: false)),
+    ),
+  ),
 );
 final fakeAnonymousUser = User(
   id: 'anon-456',
-  roles: ['guest_user'], // Updated to list of strings
-  createdAt: null, // Added new field
-  lastAccountActionShownAt: null, // Added new field
+  email: 'anonymous@test.com',
+  appRole: AppUserRole.guestUser,
+  dashboardRole: DashboardUserRole.none,
+  createdAt: DateTime.now(),
+  feedActionStatus: Map.fromEntries(
+    FeedActionType.values.map(
+      (type) => MapEntry(type, const UserFeedActionStatus(isCompleted: false)),
+    ),
+  ),
 );
+
 final fakeAuthSuccessResponse = AuthSuccessResponse(
   user: fakeUser,
   token: 'fake-token-123',
@@ -34,9 +54,18 @@ final fakeAnonymousAuthSuccessResponse = AuthSuccessResponse(
   token: 'fake-anon-token-456',
 );
 
+// Fake ResponseMetadata for testing
+final fakeResponseMetadata = ResponseMetadata(
+  requestId: 'req-123',
+  timestamp: DateTime.now(),
+);
+
 // Helper to create Map<String, dynamic> from SuccessApiResponse<User>
 Map<String, dynamic> successUserResponseToJson(SuccessApiResponse<User> resp) {
-  return {'data': resp.data.toJson()};
+  return {
+    'data': resp.data.toJson(),
+    'metadata': resp.metadata.toJson(),
+  };
 }
 
 // Helper to create Map<String, dynamic> from SuccessApiResponse<AuthSuccessResponse>
@@ -45,7 +74,7 @@ Map<String, dynamic> successAuthResponseToJson(
 ) {
   return {
     'data': resp.data.toJson(),
-    if (resp.metadata != null) 'metadata': resp.metadata!.toJson(),
+    'metadata': resp.metadata.toJson(),
   };
 }
 
@@ -109,8 +138,9 @@ void main() {
         when(
           () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
         ).thenAnswer(
-          (_) async =>
-              successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
+          (_) async => successUserResponseToJson(
+            SuccessApiResponse(data: fakeUser, metadata: fakeResponseMetadata),
+          ),
         );
         authApi = HtAuthApi(httpClient: mockHttpClient);
         authStream = authApi.authStateChanges;
@@ -126,8 +156,9 @@ void main() {
         when(
           () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
         ).thenAnswer(
-          (_) async =>
-              successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
+          (_) async => successUserResponseToJson(
+            SuccessApiResponse(data: fakeUser, metadata: fakeResponseMetadata),
+          ),
         );
         authApi = HtAuthApi(httpClient: mockHttpClient);
         authStream = authApi.authStateChanges;
@@ -137,8 +168,9 @@ void main() {
         when(
           () => mockHttpClient.get<Map<String, dynamic>>('/api/v1/auth/me'),
         ).thenAnswer(
-          (_) async =>
-              successUserResponseToJson(SuccessApiResponse(data: fakeUser)),
+          (_) async => successUserResponseToJson(
+            SuccessApiResponse(data: fakeUser, metadata: fakeResponseMetadata),
+          ),
         );
         when(
           () => mockHttpClient.post<void>(any(), data: any(named: 'data')),
@@ -153,7 +185,10 @@ void main() {
           ),
         ).thenAnswer(
           (_) async => successAuthResponseToJson(
-            SuccessApiResponse(data: fakeAuthSuccessResponse),
+            SuccessApiResponse(
+              data: fakeAuthSuccessResponse,
+              metadata: fakeResponseMetadata,
+            ),
           ),
         );
       });
@@ -227,19 +262,24 @@ void main() {
           ),
         ).thenAnswer(
           (_) async => successAuthResponseToJson(
-            SuccessApiResponse(data: fakeAuthSuccessResponse),
+            SuccessApiResponse(
+              data: fakeAuthSuccessResponse,
+              metadata: fakeResponseMetadata,
+            ),
           ),
         );
         when(
-              () => mockHttpClient.post<Map<String, dynamic>>(
-                '/api/v1/auth/anonymous',
-              ),
-            ) // Removed data expectation
-            .thenAnswer(
-              (_) async => successAuthResponseToJson(
-                SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
-              ),
-            );
+          () => mockHttpClient.post<Map<String, dynamic>>(
+            '/api/v1/auth/anonymous',
+          ),
+        ).thenAnswer(
+          (_) async => successAuthResponseToJson(
+            SuccessApiResponse(
+              data: fakeAnonymousAuthSuccessResponse,
+              metadata: fakeResponseMetadata,
+            ),
+          ),
+        );
       });
 
       tearDown(() {
@@ -340,7 +380,10 @@ void main() {
             ),
           ).thenAnswer(
             (_) async => successAuthResponseToJson(
-              SuccessApiResponse(data: fakeAnonymousAuthSuccessResponse),
+              SuccessApiResponse(
+                data: fakeAnonymousAuthSuccessResponse,
+                metadata: fakeResponseMetadata,
+              ),
             ),
           );
           final result = await authApi.signInAnonymously();
@@ -393,7 +436,6 @@ void main() {
           () => mockHttpClient.get<Map<String, dynamic>>(any()),
         ).thenThrow(UnauthorizedException('No session'));
         authApi = HtAuthApi(httpClient: mockHttpClient);
-        // *** ADDED pumpEventQueue here ***
         await pumpEventQueue(); // Allow _initializeAuthStatus to complete
         final stream = authApi.authStateChanges;
 
