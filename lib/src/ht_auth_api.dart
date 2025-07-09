@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:ht_auth_client/ht_auth_client.dart';
 import 'package:ht_http_client/ht_http_client.dart';
 import 'package:ht_shared/ht_shared.dart';
+import 'package:logging/logging.dart';
 
 /// {@template ht_auth_api}
 /// An API implementation of the [HtAuthClient] interface.
@@ -22,12 +23,18 @@ class HtAuthApi implements HtAuthClient {
   ///
   /// Requires an instance of [HtHttpClient] configured with the base URL
   /// of the API and a token provider.
-  HtAuthApi({required HtHttpClient httpClient}) : _httpClient = httpClient {
+  HtAuthApi({
+    required HtHttpClient httpClient,
+    Logger? logger,
+  })  : _httpClient = httpClient,
+        _logger = logger ?? Logger('HtAuthApi') {
     // Initialize with current user status check
     _initializeAuthStatus();
   }
 
   final HtHttpClient _httpClient;
+
+  final Logger _logger;
 
   // Stream controller to manage and broadcast authentication state changes.
   // Using broadcast allows multiple listeners.
@@ -41,19 +48,23 @@ class HtAuthApi implements HtAuthClient {
   Future<void> _initializeAuthStatus() async {
     if (_isInitialized) return;
     _isInitialized = true;
+    _logger.fine('Initializing authentication status...');
     try {
       // Attempt to get the current user on startup.
       // This might fail if the user isn't logged in (e.g., 401),
       // which is expected.
       final user = await getCurrentUser();
       _authStateController.add(user);
-    } on HtHttpException catch (_) {
+      _logger.fine('Authentication status initialized. User: ${user?.id}');
+    } on HtHttpException catch (e, s) {
       // If fetching the current user fails (e.g., 401 Unauthorized),
       // it means no user is currently logged in. Emit null.
+      _logger.warning('Failed to get current user during initialization.', e, s);
       _authStateController.add(null);
-    } on Object catch (_) {
+    } on Object catch (e, s) {
       // Catch any other unexpected error during initialization
       // and assume no user is logged in. Consider logging this error.
+      _logger.severe('Unexpected error during auth initialization.', e, s);
       _authStateController.add(null);
     }
   }
@@ -66,6 +77,7 @@ class HtAuthApi implements HtAuthClient {
 
   @override
   Future<User?> getCurrentUser() async {
+    _logger.fine('Attempting to get current user...');
     try {
       final response = await _httpClient.get<Map<String, dynamic>>(
         '$_authBasePath/me',
@@ -79,15 +91,18 @@ class HtAuthApi implements HtAuthClient {
       // or rely on stream distinctness if applicable).
       // For now, always add, letting listeners handle distinctness.
       _authStateController.add(apiResponse.data);
+      _logger.fine('Successfully fetched current user: ${apiResponse.data.id}');
       return apiResponse.data;
-    } on HtHttpException catch (e) {
+    } on HtHttpException catch (e, s) {
       // If it's an UnauthorizedException, it means no user is logged in.
       // Emit null and return null.
       if (e is UnauthorizedException) {
+        _logger.fine('No authenticated user found (401).');
         _authStateController.add(null);
         return null;
       }
       // Otherwise, rethrow the standardized exception.
+      _logger.warning('HTTP error while getting current user.', e, s);
       rethrow;
     }
   }
@@ -97,13 +112,17 @@ class HtAuthApi implements HtAuthClient {
     String email, {
     bool isDashboardLogin = false,
   }) async {
+    _logger.info(
+      'Requesting sign-in code for email: $email, dashboard: $isDashboardLogin',
+    );
     try {
       await _httpClient.post<void>(
         '$_authBasePath/request-code',
         data: {'email': email, 'isDashboardLogin': isDashboardLogin},
       );
       // No user state change here, just request sent.
-    } on HtHttpException {
+    } on HtHttpException catch (e, s) {
+      _logger.warning('Failed to request sign-in code for $email.', e, s);
       // Rethrow standardized exceptions (e.g., InvalidInputException,
       // ServerException, NetworkException).
       rethrow;
@@ -116,6 +135,7 @@ class HtAuthApi implements HtAuthClient {
     String code, {
     bool isDashboardLogin = false,
   }) async {
+    _logger.info('Verifying sign-in code for email: $email');
     try {
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/verify-code',
@@ -131,8 +151,12 @@ class HtAuthApi implements HtAuthClient {
       );
       // Successful verification, update stream with the user from the response.
       _authStateController.add(apiResponse.data.user);
+      _logger.fine(
+        'Successfully verified code for ${apiResponse.data.user.id}',
+      );
       return apiResponse.data;
-    } on HtHttpException {
+    } on HtHttpException catch (e, s) {
+      _logger.warning('Failed to verify sign-in code for $email.', e, s);
       // Rethrow standardized exceptions (e.g., InvalidInputException,
       // AuthenticationException, ServerException, NetworkException).
       rethrow;
@@ -141,6 +165,7 @@ class HtAuthApi implements HtAuthClient {
 
   @override
   Future<AuthSuccessResponse> signInAnonymously() async {
+    _logger.info('Attempting to sign in anonymously...');
     try {
       final response = await _httpClient.post<Map<String, dynamic>>(
         '$_authBasePath/anonymous',
@@ -152,8 +177,12 @@ class HtAuthApi implements HtAuthClient {
       );
       // Successful anonymous sign-in, update stream with the user.
       _authStateController.add(apiResponse.data.user);
+      _logger.fine(
+        'Successfully signed in anonymously. User ID: ${apiResponse.data.user.id}',
+      );
       return apiResponse.data;
-    } on HtHttpException {
+    } on HtHttpException catch (e, s) {
+      _logger.warning('Failed to sign in anonymously.', e, s);
       // Rethrow standardized exceptions (e.g., ServerException,
       // NetworkException).
       rethrow;
@@ -162,28 +191,31 @@ class HtAuthApi implements HtAuthClient {
 
   @override
   Future<void> signOut() async {
+    _logger.info('Attempting to sign out...');
     try {
       await _httpClient.post<void>('$_authBasePath/sign-out');
-    } on HtHttpException catch (e) {
+    } on HtHttpException catch (e, s) {
       // Log or handle sign-out specific errors if necessary,
       // but generally proceed to clear local state regardless.
       // Example: Don't prevent local sign-out if network fails here.
-      print('Error during backend sign-out notification: $e');
-    } on Object catch (e) {
+      _logger.warning('Error during backend sign-out notification.', e, s);
+    } on Object catch (e, s) {
       // Catch potential non-HTTP errors during sign-out call
-      print('Unexpected error during backend sign-out notification: $e');
+      _logger.severe('Unexpected error during backend sign-out notification.', e, s);
     } finally {
       // Always clear the local authentication state by emitting null.
       _authStateController.add(null);
       // Note: Actual token clearing should happen where HtHttpClient's
       // tokenProvider gets its token (e.g., secure storage). This client
       // doesn't manage the token itself.
+      _logger.info('Sign-out process complete. Local state cleared.');
     }
   }
 
   /// Closes the authentication state stream controller.
   /// Should be called when the client is no longer needed to prevent leaks.
   void dispose() {
+    _logger.fine('Disposing HtAuthApi and closing auth stream.');
     _authStateController.close();
   }
 }
